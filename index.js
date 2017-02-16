@@ -2,7 +2,7 @@
 
 const fs = require("fs");
 const path = require("path");
-const base = "/sys/class/gpio/"
+const base = "/sys/class/gpio/gpio"
 
 exports.activate = (gpio) => {
     fs.createWriteStream(base + 'export').end(gpio.toString())
@@ -12,9 +12,9 @@ exports.deactivate= (gpio) => {
 }; 
 
 exports.read = (gpio) => {
-    return fs.createReadStream(path.resolve(base + gpio));
+    return fs.createReadStream(path.resolve(base + gpio + "/value"));
 };
 
 exports.write = (gpio) => {
-    return fs.createWriteStream(path.resolve(base + gpio));
+    return fs.createWriteStream(path.resolve(base + gpio + "/value"));
 };
