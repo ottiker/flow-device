@@ -16,11 +16,11 @@ exports.deactivate = (scope, state, args, data, stream, next) => {
 
 exports.read = (scope, state, args, data, stream, next) => {
     console.log('GPIO.read:', args);
-    next(null, data, gpio.read(args.path));
+    next(null, data, gpio.read(args.gpio));
 };
 
 exports.write = (scope, state, args, data, stream, next) => {
     console.log('GPIO.write:', args);
-    stream.pipe(gpio.write(args.path));
+    stream.pipe(gpio.write(args.gpio));
     next(null, data, stream);
 };
