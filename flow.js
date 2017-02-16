@@ -2,12 +2,12 @@
 
 const gpio = require("./index");
 
-export.activate = (scope, state, args, stream, next) => {
+exports.activate = (scope, state, args, stream, next) => {
     gpio.activate(args.gpio);
     next(null, data, stream);
 };
 
-export.deactivate = (scope, state, args, stream, next) => {
+exports.deactivate = (scope, state, args, stream, next) => {
     gpio.deactivate(args.gpio);
     next(null, data, stream);
 };
