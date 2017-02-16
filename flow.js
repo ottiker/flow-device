@@ -13,9 +13,10 @@ export.deactivate = (scope, state, args, stream, next) => {
 };
 
 exports.read = (scope, state, args, data, stream, next) => {
-    next(null, data, stream.pipe(gpio.read(args.path)));
+    next(null, data, gpio.read(args.path));
 };
 
 exports.write = (scope, state, args, data, stream, next) => {
-    next(null, data, stream.pipe(gpio.write(args.path)));
+    stream.pipe(gpio.write(args.path));
+    next(null, data, stream);
 };
