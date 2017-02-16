@@ -2,9 +2,7 @@
 
 const fs = require("fs");
 const path = require("path");
-const config = {
-    base: "/sys/class/gpio/"
-};
+const base = "/sys/class/gpio/"
 
 exports.activate = (gpio) => {
     fs.createWriteStream(base + 'export').end(gpio)
