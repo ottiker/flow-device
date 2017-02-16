@@ -4,7 +4,7 @@ const gpio = require("./index");
 
 exports.activate = (scope, state, args, data, stream, next) => {
     console.log('GPIO.activate:', args);
-    gpio.activate(args.gpio);
+    gpio.activate(args.gpio, args.direction || "out");
     next(null, data, stream);
 };
 
