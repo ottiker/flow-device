@@ -1,0 +1,8 @@
+{
+  "devices": {
+    "/dev/cu.wchusbserial1420": {
+      "baud_rate": 115200,
+      "runtime": "espruino"
+    }
+  }
+}
