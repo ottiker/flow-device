@@ -1,29 +1,39 @@
-let isOn = false;
-const interval = 500; // 500 milliseconds = 0.5 seconds
+'use strict'
+var wifi = require('Wifi');
+var WebSocket = require("ws");
+var VERSION = "1.0";
+wifi.on("connected", () => {
+    console.log('Connected as: ' + wifi.getIP().ip);
+    var ws = new WebSocket('192.168.0.104', {
+        port: 8080,
+        path: '/'
+    });
+    ws.on("open", () => {
+        console.log("WEB SOCKET Opened");
+        var isOn = false;
+        var interval = 500;
+        setInterval(function() {
+            isOn = !isOn;
+            digitalWrite(D2, isOn);
+            var msg = {
+                d2: isOn
+            };
+            ws.send(JSON.stringify(msg));
+        }, interval);
+    });
+    ws.on("message", (msg) => {
+        console.log(msg.toString());
+    });
+});
 
-/**
- * The `main` function gets executed when the board is initialized.
- * Development: npm run dev
- * Production: npm run deploy
- */
-const wifi = require('Wifi')
-import CONFIG from './wifi.config.json'
-const {
-    name: WIFI_NAME,
-    password: WIFI_PASSWORD
-} = CONFIG
-
-wifi.connect(WIFI_NAME, {
-    password: WIFI_PASSWORD
-}, error => {
-    if (error) console.error(error)
-    else console.log(`Connected to: ${ wifi.getIP().ip }`)
-})
+wifi.connect("wificonred", {
+    password: "95440279"
+}, function(error) {
+    if (error) {
+        console.error(error);
+    }
+});
 
 function main() {
-    setInterval(() => {
-        isOn = !isOn; // Flips the state on or off
-        digitalWrite(D2, isOn); // D2 is the blue LED on the ESP8266 boards
-    }, interval);
-
+    console.log("Started: " + new Date().toString());
 }
