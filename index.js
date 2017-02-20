@@ -8,6 +8,10 @@ function error(err) {
   console.log(err);
 }
 
+module.exports = (deviceConfig) => {
+    console.log(deviceConfig);
+};
+
 /*wifi.on("connected", () => {
     console.log('Connected as: ' + wifi.getIP().ip);
     var ws = new WebSocket('192.168.0.100', {
@@ -31,10 +35,10 @@ E.on('init', function() {
   
   // check if wifi is connected
   // else connect
-  wifi.connect("wificonred", {
+  WiFi.connect("wificonred", {
       password: "95440279"
   }, error);
-  
+  WiFi.stopAP();
   // get MCDescriptor from server
   // setup parser
   // ready
