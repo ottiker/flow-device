@@ -1,6 +1,6 @@
 {
-  "name": "peePonics",
-  "version": "0.0.0",
+  "name": "peeponics",
+  "version": "0.1.0",
   "private": true,
   "main": "main.js",
   "scripts": {
@@ -17,5 +17,22 @@
   },
   "dependencies": {
     "ws": "^2.1.0"
-  }
+  },
+  "description": "GPIO R/W for flow.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ottiker/flow-device.git"
+  },
+  "keywords": [
+    "hydroponics",
+    "pee",
+    "flow",
+    "IoT"
+  ],
+  "author": "Mr. Pee Ponic <contact@ottiker.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ottiker/flow-device/issues"
+  },
+  "homepage": "https://github.com/ottiker/flow-device#readme"
 }
