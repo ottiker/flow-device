@@ -1,2 +1,2 @@
-# flow-gpio
-GPIO R/W for flow.
+# flow-device
+Flow device firmware.
