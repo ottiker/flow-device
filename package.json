@@ -4,14 +4,10 @@
   "private": true,
   "main": "main.js",
   "scripts": {
-    "dev": "node ./scripts/upload development && npm run repl",
-    "deploy": "node ./scripts/upload production",
-    "install": "cp firmware.js ../../projects/flow_device_fw_v0.1.0.js",
-    "repl": "node ./scripts/repl"
+    "deploy": "cp index.js ../flow-device.js",
+    "install": "cp lib/firmware.js ../../projects/flow_device_fw_v0.1.0.js"
   },
   "devDependencies": {
-    "thingssdk-deployer": "~1.0.0",
-    "thingssdk-espruino-strategy": "~1.0.1"
   },
   "engines": {
     "espruino": "1.89"
