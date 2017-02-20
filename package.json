@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "node ./scripts/upload development && npm run repl",
     "deploy": "node ./scripts/upload production",
+    "install": "cp firmware.js ../../projects/flow_device_fw_v0.1.0.js",
     "repl": "node ./scripts/repl"
   },
   "devDependencies": {
