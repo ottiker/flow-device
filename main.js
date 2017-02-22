@@ -1,99 +1,60 @@
-'use strict'
-const wifi = require('Wifi');
-const WebSocket = require("ws");
-const VERSION = "1.0";
-const config = JSON.stringify({ "array" :[
-   {
-       "uid": "1",
-       "type": "<http://vocab.peePonic.com/waterPump>",
-       "api": [
-           {
-               "name": "on",
-               "bus": "gpio",
-               "pin": 4,
-               "direction": "out",
-               "value": 1
-           },
-           {
-               "name": "off",
-               "bus": "gpio",
-               "pin": 4,
-               "direction": "out",
-               "value": 0
-           }
-       ]
-   },
+const VERSION = "1.67",
+    w = require('Wifi'),
+    esp = require("ESP8266"),
+    h = "garden-manager",
+    SSID = "Joshua's iPhone",
+    ssidPassword = "secret99",
+    options = {
+        client_id: getSerial(),
+        keep_alive: 15,
+        ping_interval: 10,
+        port: 1883,
+        clean_session: true,
+        username: "",
+        password: "",
+        protocol_name: "MQTT",
+        protocol_level: 4
+    },
+    mqtt = require("MQTT").create("test.mosca.io");
 
-   {
-       "uid": "2",
-       "type": "<http://vocab.peePonic.com/waterPump>",
-       "api": [
-           {
-               "name": "on",
-               "bus": "gpio",
-               "pin": 4,
-               "direction": "out",
-               "value": 1
-           },
-           {
-               "name": "off",
-               "bus": "gpio",
-               "pin": 4,
-               "direction": "out",
-               "value": 0
-           }
-       ]
-   },
-
-   {
-       "uid": "3",
-       "type": "<http://vocab.peePonic.com/airPump>",
-       "api": [
-           {
-               "name": "none"
-           }
-       ]
-   },
-
-   {
-       "uid": "4",
-       "type": "<http://vocab.peePonic.com/waterSensor>",
-       "api": [
-           {
-               "name": "get",
-               "bus": "gpio",
-               "pin": "A0"
-           }
-       ]
-   }
-]
-});
-
-wifi.on("connected", () => {
-    console.log('Connected as: ' + wifi.getIP().ip);
-    var ws = new WebSocket('192.168.0.104', {
-        port: 8080,
-        path: '/'
+function connect() {
+    w.on("connected", (details) => {
+        console.log("Connected as: " + w.getIP().ip);
+        console.log(details);
     });
-
-    ws.on("open", () => {
-        console.log("WEB SOCKET Opened");
-        digitalWrite(D2, HIGH);
-        ws.send(config);
+    w.on("disconnected", (details) => {
+        console.log(details);
+        w.connect(SSID, {
+            password: ssidPassword
+        }, function(error) {
+            console.log(error);
+        });
     });
-    ws.on("message", (msg) => {
-        console.log(JSON.parse(msg.toString()));
-    });
-});
-
-wifi.connect("wificonred", {
-    password: "95440279"
-}, function(error) {
-    if (error) {
-        console.error(error);
-    }
-});
-
-function main() {
-    console.log("Started: " + new Date().toString());
 }
+mqtt.on("connected", () => {
+    mqtt.publish("/test/esp/log", w.getHostname() + " has connected.");
+    mqtt.subscribe("/test/esp/cmd");
+});
+mqtt.on("disconnected", () => mqtt.connect());
+mqtt.on("publish", (p) => {
+    console.log("Topic: " + p.topic);
+    console.log("Message: " + p.message);
+    var x = JSON.parse(p.message);
+    digitalWrite(x.pin, x.value);
+});
+E.on("init", () => {
+    console.log("Started " + VERSION + ": Connecting...");
+    connect();
+    w.stopAP();
+    w.connect(SSID, {
+        password: ssidPassword
+    }, function(error) {
+        if (error) console.log(error);
+        try {
+            w.setSNTP('195.216.64.208', 0);
+        } catch (e) {
+            console.log(e);
+        }
+        mqtt.connect();
+    });
+});
