@@ -1,6 +1,6 @@
-const VERSION = "1.7e",
+const VERSION = "1.72n",
     w = require("Wifi"),
-    SSID = "Joshua's iPhone",
+    SSID = "X11",
     ssidPassword = "secret99",
     wemos = {
         D0: "",
@@ -14,64 +14,41 @@ const VERSION = "1.7e",
     },
     configMap = [{
         id: "dccbaa81-b2e4-46e4-a2f4-84d398dd86e3",
-        pin: wemos.D0,
-        type: "button",
-        validCmds: ["on", "off", "getState"]
-    }, {
-        id: "e3fe89ab-ead5-46c7-a4fe-93566ad068ee",
-        pin: wemos.D1,
+        pin: () => {
+            I2C1.setup({
+                scl: D5,
+                sda: D4
+            });
+            var lux = require("BH1750").connect(I2C1);
+            lux.start(1);
+            return lux;
+        },
         type: "virtual",
-        validCmds: ["on", "off", "getState"]
-    }, {
-        id: "785820c3-42ed-49fd-898f-ce450140d8b6",
-        pin: wemos.D2,
-        type: "virtual",
-        validCmds: ["on", "off", "getState"]
-    }, {
-        id: "31e86904-1445-4a24-b91d-00810fcf986c",
-        pin: wemos.D3,
-        type: "button",
-        validCmds: ["on", "off", "getState"]
+        validCmds: ["read", "readCont", "readContStop"],
+        meta: {
+            metric: "light intensity",
+            unit: "lux"
+        }
     }, {
         id: "828fbaa2-4f56-4cc5-99bf-57dcb5bd85f5",
         pin: wemos.D4,
         type: "button",
-        validCmds: ["on", "off", "getState"]
-    }, {
-        id: "fa9e3f66-da33-4618-8035-ba13a30cc737",
-        pin: wemos.D5,
-        type: "button",
-        validCmds: ["on", "off", "getState"]
-    }, {
-        id: "a9bfcb31-655a-4a5a-8ae3-6fa99eac30ec",
-        pin: wemos.D6,
-        type: "button",
-        validCmds: ["on", "off", "getState"]
-    }, {
-        id: "573cda83-d7cf-4480-8fb8-7319c03a4abb",
-        pin: wemos.D7,
-        type: "button",
-        validCmds: ["on", "off", "getState"]
-    }, {
-        id: "2953533e-47eb-4742-8b30-70d6eefe1885",
-        pin: wemos.D8,
-        type: "button",
-        validCmds: ["on", "off", "getState"]
-    }];
-
-var lux = require("BH1750").connect(I2C1, false);
-lux.start(1, false);
-
-var luxInterval = setInterval((lux) => {
-    console.log("Lux: "+lux.read());
-}, 500);
+        validCmds: ["on", "off", "getState"],
+        meta: {
+            usage: "Mains Relay"
+        }
+    }],
+    WebSocket = require("ws");
+var ws = {};
 
 function configGen(config) {
     let ret = [];
     config.forEach((el) => {
         let t = {
             device: el.id,
-            type: el.type
+            type: el.type,
+            validCmds: el.validCmds,
+            meta: el.meta
         };
         ret.push(t);
     });
@@ -92,6 +69,34 @@ function dimmer(pin, value) {
     analogWrite(pin, value);
 }
 
+function virtual(pin, cmd) {
+    switch (cmd) {
+        case "read":
+            let x = pin().read().toString();
+            console.log(x);
+            ws.send(x);
+            break;
+        case "readCont":
+            // set a timeout of 5 mins.
+            let thisRead = setInterval(() => {
+                let x = pin().read().toString();
+                console.log(x);
+                ws.send(x);
+            }, 1000);
+            let thisTimeout = setTimeout(function() {
+                clearInterval(thisRead);
+            }, 300000);
+            ws.on("close", () => {
+                clearInterval(thisRead);
+                clearTimeout(thisTimeout);
+            });
+            break;
+        default:
+            break;
+
+    }
+}
+
 function connect() {
     w.on("connected", (details) => {});
     w.on("disconnected", (details) => {
@@ -103,16 +108,67 @@ function connect() {
     });
 }
 
-function msgParse() {
-    let m = JSON.parse(p.message);
-    let d = (map) => {
+function msgParse(msg) {
+    // so, something like:
+    /*
+     * ["cmd", {device: devID, cmd: cmd}]
+     * ["config", {device: devID, type: virtual, validCmds: ["read", "readContinuous"]}]
+     * where the array is n[0] = message type, n[1] = message.
+     */
+
+    let m = JSON.parse(msg);
+    let device = (map) => {
         for (let x = 0; x < map.length; x++) {
-            if (map[x].id === m.device) {
+            if (map[x].id === m[1].device) {
                 return map[x];
             }
         }
     };
-    button(d(configMap).pin, m.cmd);
+    switch (m[0]) {
+        case "cmd":
+            let d = device(configMap);
+            switch (d.type) {
+                case "button":
+                    button(d.pin, m[1].cmd);
+                    break;
+                case "virtual":
+                    virtual(d.pin, m[1].cmd);
+                    break;
+                case "dimmer":
+                    dimmer(d.pin, m[1].cmd);
+                    break;
+                default:
+                    break;
+            }
+            break;
+        case "config":
+            break;
+        default:
+            break;
+    }
+}
+
+function wsconnect(state) {
+    console.log("Creating the websocket...");
+    if (state === 1) {
+        ws.removeAllListeners();
+        ws = null;
+    }
+    ws = new WebSocket("192.168.0.5", {
+        path: "/ws/josh",
+        port: 1880,
+        origin: "MCU",
+        keepAlive: 60
+    });
+    ws.on("open", () => {
+        ws.send(JSON.stringify(configGen(configMap)));
+    });
+    ws.on("close", () => {
+        wsconnect(1);
+    });
+    ws.on("message", (msg) => {
+        msgParse(msg.toString());
+    });
 }
 
 E.on("init", () => {
@@ -121,12 +177,10 @@ E.on("init", () => {
     w.stopAP();
     w.connect(SSID, {
         password: ssidPassword
-    }, function(error) {
-        if (error) console.log(error);
-        try {
-            w.setSNTP("195.216.64.208", 0);
-        } catch (e) {
-            console.log(e);
+    }, (error) => {
+        if (error) {
+            console.log(error);
         }
+        wsconnect(0);
     });
 });
