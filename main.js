@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 const VERSION = "1.72n",
 	w = require("Wifi"),
 	SSID = "X11",
